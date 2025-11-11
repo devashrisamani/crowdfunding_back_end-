@@ -26,15 +26,3 @@ class FundraiserList(APIView):
              serializer.errors,
              status=status.HTTP_400_BAD_REQUEST
         )
-    
-class FundraiserDetail(APIView):
-  def get_object(self, pk):
-      try:
-          fundraiser = Fundraiser.objects.get(pk=pk)
-          return fundraiser
-      except Fundraiser.DoesNotExist:
-          raise Http404
-  def get(self, request, pk):
-      fundraiser = self.get_object(pk)
-      serializer = FundraiserSerializer(fundraiser)
-      return Response(serializer.data)

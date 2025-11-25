@@ -12,6 +12,7 @@ from .models import CustomUser
 from .serializers import CustomUserSerializer
 
 class CustomUserList(APIView):
+  
   def get(self, request):
       users = CustomUser.objects.all()
       serializer = CustomUserSerializer(users, many=True)
@@ -31,6 +32,7 @@ class CustomUserList(APIView):
       )
 
 class CustomUserDetail(APIView):
+  
   def get_object(self, pk):
       try:
           return CustomUser.objects.get(pk=pk)
@@ -41,15 +43,18 @@ class CustomUserDetail(APIView):
       user = self.get_object(pk)
       serializer = CustomUserSerializer(user)
       return Response(serializer.data)
+  
+
 
 class CustomAuthToken(ObtainAuthToken):
+
     def post(self, request, *args, **kwargs):
       serializer = self.serializer_class(
           data=request.data,
           context={'request': request}
       )
       serializer.is_valid(raise_exception=True)
-      user = serializer.validated_data['user']
+      user = serializer.validated_data["user"]
       token, created = Token.objects.get_or_create(user=user)
 
       return Response({

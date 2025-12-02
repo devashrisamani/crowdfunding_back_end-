@@ -461,6 +461,10 @@ class PledgeList(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+# Define a class for pledge detail view
+# Add Get, Put, Delete functions 
+# What happens when you delete and update the pledge? 
+# Pledge permissions 
 
 """
 =============================================================================

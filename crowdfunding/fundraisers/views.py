@@ -353,6 +353,29 @@ class FundraiserDetail(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
   
+#   DELETE METHOD - Delete a Fundraiser
+    def delete(self,request,pk):
+        """
+        DELETE METHOD - Delete a Fundraiser
+        ------------------------------------
+        
+        Called when: DELETE /fundraisers/1/
+        Permission: Owner only (IsOwnerOrReadOnly)
+        
+        FLOW:
+        -----
+        1. Get the fundraiser (permission check happens here)
+        2. Delete the fundraiser
+        3. Return 204 No Content
+        
+        EXAMPLE REQUEST:
+        ----------------
+        DELETE /fundraisers/1/
+        Headers: Authorization: Token abc123...
+        """
+        fundraiser = self.get_object(pk)
+        fundraiser.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)  
 
 class PledgeList(APIView):
     """

@@ -34,8 +34,12 @@ Detail View (GET /fundraisers/1/):
 =============================================================================
 """
 
+from pyclbr import Class
+from pyexpat import model
 from rest_framework import serializers
 from django.apps import apps
+
+from crowdfunding.fundraisers.models import Pledge
 # apps.get_model() is a way to get a model without direct import
 # This can help avoid circular import issues
 
@@ -90,6 +94,20 @@ class PledgeSerializer(serializers.ModelSerializer):
         #
         # ALTERNATIVE: List specific fields
         # fields = ['id', 'amount', 'comment', 'anonymous', 'fundraiser', 'supporter']
+
+class PledgeDetailSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    amount=serializers.IntegerField(read_only=True)
+    fundraiser = serializers.PrimaryKeyRelatedField(read_only=True)
+    supporter = serializers.PrimaryKeyRelatedField(read_only=True)
+    date_created = serializers.DateTimeField(read_only=True)
+
+    anonymous = serializers.BooleanField(read_only=True)
+    comment = serializers.CharField()
+
+    class Meta:
+        model = Pledge
+        fields = '_all_'
 
 
 class FundraiserSerializer(serializers.ModelSerializer):

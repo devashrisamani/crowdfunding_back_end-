@@ -34,6 +34,3 @@ class IsSupporterOrReadOnly(permissions.BasePermission):
         # This returns True if the user owns this object
         # Returns False if they don't (triggering a 403 Forbidden)
         
-
-
-# Add pledge to add to the fundraiser only if it is open - Permission

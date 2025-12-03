@@ -353,29 +353,28 @@ class FundraiserDetail(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
   
-#   DELETE METHOD - Delete a Fundraiser
-    def delete(self,request,pk):
-        """
-        DELETE METHOD - Delete a Fundraiser
-        ------------------------------------
-        
-        Called when: DELETE /fundraisers/1/
-        Permission: Owner only (IsOwnerOrReadOnly)
-        
-        FLOW:
-        -----
-        1. Get the fundraiser (permission check happens here)
-        2. Delete the fundraiser
-        3. Return 204 No Content
-        
-        EXAMPLE REQUEST:
-        ----------------
-        DELETE /fundraisers/1/
-        Headers: Authorization: Token abc123...
-        """
-        fundraiser = self.get_object(pk)
-        fundraiser.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)  
+  def delete(self,request,pk):
+    """
+    DELETE METHOD - Delete a Fundraiser
+    ------------------------------------
+    
+    Called when: DELETE /fundraisers/1/
+    Permission: Owner only (IsOwnerOrReadOnly)
+    
+    FLOW:
+    -----
+    1. Get the fundraiser (permission check happens here)
+    2. Delete the fundraiser
+    3. Return 204 No Content
+    
+    EXAMPLE REQUEST:
+    ----------------
+    DELETE /fundraisers/1/
+    Headers: Authorization: Token abc123...
+    """
+    fundraiser = self.get_object(pk)
+    fundraiser.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)  
 
 class PledgeList(APIView):
     """
@@ -461,35 +460,6 @@ class PledgeList(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-# Define a class for pledge detail view
-class PledgeDetail(APIView):
-    permission_classes = {
-
-    }
-
-    def get_object(self, pk):
-
-    # Get an details of an individual pledge
-    def get(self, request, pk):
-
-    # Edit details of a comment/ anonymous status of an individual pledge
-    def put(self,request, pk):
-
-
-    serializer = PledgeSerializer(
-        instance=pledge,
-        data=request.data,
-        partial=True  # ← This is key!
-    )
-
-    # After serializer.is_valid():
-    serializer.save()  # This won't change supporter because it's read_only
-
-
-
-# Add Get, Put, Delete functions 
-# What happens when you delete and update the pledge? 
-# Pledge permissions 
 
 """
 =============================================================================

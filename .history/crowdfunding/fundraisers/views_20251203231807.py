@@ -436,37 +436,49 @@ class PledgeDetail(APIView):
 
     def get_object(self, pk):
         try:
-            pledge = Pledge.objects.get(pk=pk)
+            Pledge = Pledge.objects.get(pk=pk)
             
-            self.check_object_permissions(self.request, pledge)
+            self.check_object_permissions(self.request, Pledge)
             
-            return pledge
+            return Pledge
             
         except Pledge.DoesNotExist:
             raise Http404
 
     def get(self, request, pk):
+        # Get the pledge (or 404)
         pledge = self.get_object(pk)
         
+        # Serialize with the DETAIL serializer (includes pledges)
         serializer = PledgeDetailSerializer(pledge)
+        # Note: no many=True because it's a single object
         
         return Response(serializer.data)
 
     # Edit details of a comment/ anonymous status of an individual pledge
+
     def put(self,request, pk):
 
+        # Get the existing pledge (permission check happens here)
         pledge = self.get_object(pk)
         
+        # Create serializer with:
+        # - instance: the existing fundraiser
+        # - data: the new data from the request
+        # - partial: allow partial updates
         serializer = PledgeDetailSerializer(
             instance=pledge,
             data=request.data,
             partial=True
         )
         
+        # Validate and save
         if serializer.is_valid():
             serializer.save()
+            # This calls the update() method in PledgeDetailSerializer
             return Response(serializer.data)
         
+        # Return errors if validation failed
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST

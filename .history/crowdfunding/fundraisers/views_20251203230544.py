@@ -429,45 +429,104 @@ class PledgeList(APIView):
 
 # Define a class for pledge detail view
 class PledgeDetail(APIView):
-    permission_classes = [
+    permission_classes = {
         permissions.IsAuthenticatedOrReadOnly,
         IsSupporterOrReadOnly  
-    ]
+    }
 
     def get_object(self, pk):
         try:
-            pledge = Pledge.objects.get(pk=pk)
+            # Try to find the pledge of a fundraiser
+            Pledge = Pledge.objects.get(pk=pk)
             
-            self.check_object_permissions(self.request, pledge)
+            # Check object-level permissions
+            self.check_object_permissions(self.request, Pledge)
+            # This calls IsOwnerOrReadOnly.has_object_permission()
+            # If the check fails, it raises PermissionDenied
             
-            return pledge
+            return Pledge
             
         except Pledge.DoesNotExist:
+            # Pledge with this ID doesn't exist
             raise Http404
+            # Returns: {"detail": "Not found."}
 
+    # Get an details of an individual pledge
     def get(self, request, pk):
-        pledge = self.get_object(pk)
-        
-        serializer = PledgeDetailSerializer(pledge)
-        
-        return Response(serializer.data)
 
     # Edit details of a comment/ anonymous status of an individual pledge
     def put(self,request, pk):
 
-        pledge = self.get_object(pk)
-        
-        serializer = PledgeDetailSerializer(
-            instance=pledge,
-            data=request.data,
-            partial=True
-        )
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+
+    serializer = PledgeSerializer(
+        instance=pledge,
+        data=request.data,
+        partial=True  # ← This is key!
+    )
+
+    # After serializer.is_valid():
+    serializer.save()  # This won't change supporter because it's read_only
+
+
+
+# Add Get, Put, Delete functions 
+# What happens when you delete and update the pledge? 
+# Pledge permissions 
+
+"""
+=============================================================================
+HTTP STATUS CODES CHEAT SHEET
+=============================================================================
+
+SUCCESS (2xx):
+--------------
+200 OK             - Request succeeded (default for Response())
+201 Created        - Resource was created (POST success)
+204 No Content     - Success, but nothing to return (DELETE success)
+
+CLIENT ERRORS (4xx):
+--------------------
+400 Bad Request    - Invalid data sent by client
+401 Unauthorized   - Authentication required
+403 Forbidden      - Authenticated but not allowed
+404 Not Found      - Resource doesn't exist
+405 Method Not Allowed - HTTP method not supported
+
+SERVER ERRORS (5xx):
+--------------------
+500 Internal Server Error - Something broke on the server
+
+USING STATUS CODES:
+-------------------
+from rest_framework import status
+
+return Response(data, status=status.HTTP_201_CREATED)
+return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+=============================================================================
+VIEW PATTERNS CHEAT SHEET
+=============================================================================
+
+COMMON PATTERNS FOR VIEWS:
+--------------------------
+
+# List + Create (collection endpoint)
+class ItemList(APIView):
+    def get(self, request):     # List all
+    def post(self, request):    # Create new
+
+# Retrieve + Update + Delete (item endpoint)
+class ItemDetail(APIView):
+    def get(self, request, pk):     # Get one
+    def put(self, request, pk):     # Update
+    def delete(self, request, pk):  # Delete
+
+# Common helper method
+def get_object(self, pk):
+    try:
+        return Item.objects.get(pk=pk)
+    except Item.DoesNotExist:
+        raise Http404
+
+=============================================================================
+"""

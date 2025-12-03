@@ -429,45 +429,27 @@ class PledgeList(APIView):
 
 # Define a class for pledge detail view
 class PledgeDetail(APIView):
-    permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly,
-        IsSupporterOrReadOnly  
-    ]
+    permission_classes = {
+
+    }
 
     def get_object(self, pk):
-        try:
-            pledge = Pledge.objects.get(pk=pk)
-            
-            self.check_object_permissions(self.request, pledge)
-            
-            return pledge
-            
-        except Pledge.DoesNotExist:
-            raise Http404
 
+    # Get an details of an individual pledge
     def get(self, request, pk):
-        pledge = self.get_object(pk)
-        
-        serializer = PledgeDetailSerializer(pledge)
-        
-        return Response(serializer.data)
 
     # Edit details of a comment/ anonymous status of an individual pledge
     def put(self,request, pk):
 
-        pledge = self.get_object(pk)
-        
-        serializer = PledgeDetailSerializer(
-            instance=pledge,
-            data=request.data,
-            partial=True
-        )
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+
+    serializer = PledgeSerializer(
+        instance=pledge,
+        data=request.data,
+        partial=True  # ← This is key!
+    )
+
+    # After serializer.is_valid():
+    serializer.save()  # This won't change supporter because it's read_only
+
+
+

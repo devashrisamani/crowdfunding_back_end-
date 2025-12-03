@@ -446,9 +446,12 @@ class PledgeDetail(APIView):
             raise Http404
 
     def get(self, request, pk):
+        # Get the pledge (or 404)
         pledge = self.get_object(pk)
         
+        # Serialize with the DETAIL serializer (includes pledges)
         serializer = PledgeDetailSerializer(pledge)
+        # Note: no many=True because it's a single object
         
         return Response(serializer.data)
 

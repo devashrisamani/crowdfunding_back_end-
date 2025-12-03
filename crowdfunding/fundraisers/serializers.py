@@ -96,6 +96,9 @@ class PledgeSerializer(serializers.ModelSerializer):
         # ALTERNATIVE: List specific fields
         # fields = ['id', 'amount', 'comment', 'anonymous', 'fundraiser', 'supporter']
 
+# Can add validation in the amount later if the supporter tries to edit the amount. 
+# And personalized permissions saying "Only the supporter who created this pledge can modify it."
+# Because right now it only shows a 403 error
 class PledgeDetailSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     amount=serializers.IntegerField(read_only=True)

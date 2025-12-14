@@ -533,3 +533,35 @@ class PledgeDetail(APIView):
         pledge.comment = ""
         pledge.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MyFundraisers(APIView):
+    """
+    Authenticated view returning fundraisers owned by the current user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        fundraisers = Fundraiser.objects.filter(owner=request.user)
+        serializer = FundraiserSerializer(
+            fundraisers,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+
+
+class MyPledges(APIView):
+    """
+    Authenticated view returning pledges made by the current user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        pledges = Pledge.objects.filter(supporter=request.user)
+        serializer = PledgeSerializer(
+            pledges,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data)

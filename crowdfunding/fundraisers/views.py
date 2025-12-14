@@ -5,7 +5,7 @@ from rest_framework import status, permissions
 from django.http import Http404
 from .models import Fundraiser, Pledge
 from .serializers import FundraiserSerializer, PledgeSerializer, FundraiserDetailSerializer, PledgeDetailSerializer
-from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly, IsSupporterOrFundraiserOwnerOrReadOnly
 
 
 class FundraiserList(APIView):
@@ -262,7 +262,10 @@ class FundraiserDetail(APIView):
         fundraiser = self.get_object(pk)
         
         # Serialize with the DETAIL serializer (includes pledges)
-        serializer = FundraiserDetailSerializer(fundraiser)
+        serializer = FundraiserDetailSerializer(
+            fundraiser,
+            context={'request': request}
+        )
         # Note: no many=True because it's a single object
         
         return Response(serializer.data)
@@ -347,17 +350,17 @@ class PledgeList(APIView):
     """
     PLEDGE LIST VIEW
     ================
-    
+
     Endpoint: /pledges/
     Methods: GET (list all), POST (create new)
-    
+
     NOTE: No permission classes defined here!
     This means the default applies (from settings.py or AllowAny).
-    
+
     In a real app, you might want:
     - permission_classes = [permissions.IsAuthenticatedOrReadOnly]
       (require login to create pledges)
-    
+
     You might also want to auto-set supporter like we do with owner:
     - serializer.save(supporter=request.user)
     """
@@ -382,7 +385,11 @@ class PledgeList(APIView):
             pledges = Pledge.objects.filter(fundraiser_id=fundraiser_id)
         """
         pledges = Pledge.objects.all()
-        serializer = PledgeSerializer(pledges, many=True)
+        serializer = PledgeSerializer(
+            pledges,
+            many=True,
+            context={'request': request}
+        )
         return Response(serializer.data)
     
     def post(self, request):
@@ -431,7 +438,7 @@ class PledgeList(APIView):
 class PledgeDetail(APIView):
     permission_classes = [
         permissions.IsAuthenticatedOrReadOnly,
-        IsSupporterOrReadOnly  
+        IsSupporterOrFundraiserOwnerOrReadOnly  
     ]
 
     def get_object(self, pk):
@@ -448,7 +455,10 @@ class PledgeDetail(APIView):
     def get(self, request, pk):
         pledge = self.get_object(pk)
         
-        serializer = PledgeDetailSerializer(pledge)
+        serializer = PledgeDetailSerializer(
+            pledge,
+            context={'request': request}
+        )
         
         return Response(serializer.data)
 
@@ -456,11 +466,19 @@ class PledgeDetail(APIView):
     def put(self,request, pk):
 
         pledge = self.get_object(pk)
+
+        # Only the supporter can update their own comment/anonymous flag.
+        if request.user != pledge.supporter:
+            return Response(
+                {"detail": "Only the pledge supporter can edit this pledge."},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         serializer = PledgeDetailSerializer(
             instance=pledge,
             data=request.data,
-            partial=True
+            partial=True,
+            context={'request': request}
         )
         
         if serializer.is_valid():
@@ -471,3 +489,37 @@ class PledgeDetail(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    # Fundraiser owners can hide/unhide a pledge's comment for public viewers.
+    def patch(self, request, pk):
+        pledge = self.get_object(pk)
+
+        if request.user != pledge.fundraiser.owner:
+            return Response(
+                {"detail": "Only the fundraiser owner can hide or unhide comments."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if 'is_hidden_by_owner' not in request.data:
+            return Response(
+                {"detail": "Provide 'is_hidden_by_owner': true or false."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        raw_value = request.data.get('is_hidden_by_owner')
+        if raw_value in [True, 'true', 'True', '1', 1]:
+            pledge.is_hidden_by_owner = True
+        elif raw_value in [False, 'false', 'False', '0', 0]:
+            pledge.is_hidden_by_owner = False
+        else:
+            return Response(
+                {"detail": "is_hidden_by_owner must be true or false."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        pledge.save()
+        serializer = PledgeDetailSerializer(
+            pledge,
+            context={'request': request}
+        )
+        return Response(serializer.data)

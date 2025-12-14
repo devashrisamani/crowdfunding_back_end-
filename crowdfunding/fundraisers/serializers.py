@@ -11,7 +11,7 @@ class PledgeSerializer(serializers.ModelSerializer):
     Handles conditional hiding of pledge comments.
     """
 
-    # Only the API sets the supporter; expose it read-only in responses.
+    # Only the API sets the supporter, made it read-only in responses so someone else cannot change it.
     supporter = serializers.ReadOnlyField(source='supporter.id')
     # This field is derived from the model and cannot be written to by users
     is_hidden_by_owner = serializers.BooleanField(read_only=True)

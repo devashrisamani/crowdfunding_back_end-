@@ -354,16 +354,9 @@ class PledgeList(APIView):
     Endpoint: /pledges/
     Methods: GET (list all), POST (create new)
 
-    NOTE: No permission classes defined here!
-    This means the default applies (from settings.py or AllowAny).
-
-    In a real app, you might want:
-    - permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-      (require login to create pledges)
-
-    You might also want to auto-set supporter like we do with owner:
-    - serializer.save(supporter=request.user)
+    Auth is required to create; anyone can read.
     """
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
     def get(self, request):
         """
@@ -422,9 +415,12 @@ class PledgeList(APIView):
         
         This prevents users from creating pledges as other users!
         """
-        serializer = PledgeSerializer(data=request.data)
+        serializer = PledgeSerializer(
+            data=request.data,
+            context={'request': request}
+        )
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(supporter=request.user)
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED
@@ -523,3 +519,17 @@ class PledgeDetail(APIView):
             context={'request': request}
         )
         return Response(serializer.data)
+
+    # Supporters can clear their comment without deleting the pledge itself.
+    def delete(self, request, pk):
+        pledge = self.get_object(pk)
+
+        if request.user != pledge.supporter:
+            return Response(
+                {"detail": "Only the pledge supporter can delete their comment."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        pledge.comment = ""
+        pledge.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)

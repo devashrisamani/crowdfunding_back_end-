@@ -139,7 +139,7 @@ class PledgeList(APIView):
         Create a new pledge.
         """
 
-        # Had to come back to the backend to change the supporter as it should always be taken from the authenticated user now as we have added the login functionality,
+        # The supporter should always be taken from the authenticated user,
         # not from the request body, so we pass supporter=request.user
         # explicitly when saving. The serializer treats supporter as
         # read-only, so it is not required in the input payload.
@@ -148,6 +148,23 @@ class PledgeList(APIView):
             context={'request': request}
         )
         if serializer.is_valid():
+            # Access the associated fundraiser from validated data
+            fundraiser = serializer.validated_data.get('fundraiser')
+
+            # 1) Prevent pledges to closed fundraisers
+            if not fundraiser.is_open:
+                return Response(
+                    {"detail": "This fundraiser is closed and cannot accept new pledges."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 2) Prevent owners from pledging to their own fundraiser
+            if fundraiser.owner == request.user:
+                return Response(
+                    {"detail": "You cannot pledge to your own fundraiser."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             serializer.save(supporter=request.user)
             return Response(
                 serializer.data,

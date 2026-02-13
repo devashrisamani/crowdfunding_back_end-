@@ -11,11 +11,24 @@ class PledgeSerializer(serializers.ModelSerializer):
     Handles conditional hiding of pledge comments.
     """
 
+    # Only the API sets the supporter; expose the ID and username as read-only.
+    supporter = serializers.ReadOnlyField(source='supporter.id')
+    supporter_username = serializers.CharField(
+        source='supporter.username',
+        read_only=True
+    )
+    supporter_first_name = serializers.CharField(
+        source='supporter.first_name',
+        read_only=True
+    )
+    supporter_last_name = serializers.CharField(
+        source='supporter.last_name',
+        read_only=True
+    )
     # This field is derived from the model and cannot be written to by users
     is_hidden_by_owner = serializers.BooleanField(read_only=True)
     
     class Meta:
-        # Which model does this serializer work with?
         model = apps.get_model('fundraisers.Pledge')
         fields = '__all__'
 
@@ -31,18 +44,21 @@ class PledgeSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         if instance.is_hidden_by_owner:
-            # Get the request object from serializer context (if provided)
             request = getattr(self, 'context', {}).get('request')
             user = getattr(request, 'user', None)
 
-            # Check whether the current user is allowed to see the comment
             is_owner = bool(user and user.is_authenticated and user == instance.fundraiser.owner)
             is_supporter = bool(user and user.is_authenticated and user == instance.supporter)
 
-             # Hide the comment for all other users
+            # Hide the comment for all other users
             if not is_owner and not is_supporter:
                 data['comment'] = ''
         return data
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be greater than zero.")
+        return value
 
 
 class PledgeDetailSerializer(serializers.ModelSerializer):
@@ -55,6 +71,18 @@ class PledgeDetailSerializer(serializers.ModelSerializer):
     amount=serializers.IntegerField(read_only=True)
     fundraiser = serializers.PrimaryKeyRelatedField(read_only=True)
     supporter = serializers.PrimaryKeyRelatedField(read_only=True)
+    supporter_username = serializers.CharField(
+        source='supporter.username',
+        read_only=True
+    )
+    supporter_first_name = serializers.CharField(
+        source='supporter.first_name',
+        read_only=True
+    )
+    supporter_last_name = serializers.CharField(
+        source='supporter.last_name',
+        read_only=True
+    )
     date_created = serializers.DateTimeField(read_only=True)
     is_hidden_by_owner = serializers.BooleanField(read_only=True)
 
@@ -99,6 +127,11 @@ class FundraiserSerializer(serializers.ModelSerializer):
         model = apps.get_model('fundraisers.Fundraiser')
         fields = '__all__'
 
+    def validate_goal(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Goal must be greater than zero.")
+        return value
+
 
 class FundraiserDetailSerializer(FundraiserSerializer):
     """
@@ -127,4 +160,3 @@ class FundraiserDetailSerializer(FundraiserSerializer):
         
         # Return the updated instance
         return instance
-

@@ -11,8 +11,20 @@ class PledgeSerializer(serializers.ModelSerializer):
     Handles conditional hiding of pledge comments.
     """
 
-    # Only the API sets the supporter, made it read-only in responses so someone else cannot change it.
+    # Only the API sets the supporter; expose the ID and username as read-only.
     supporter = serializers.ReadOnlyField(source='supporter.id')
+    supporter_username = serializers.CharField(
+        source='supporter.username',
+        read_only=True
+    )
+    supporter_first_name = serializers.CharField(
+        source='supporter.first_name',
+        read_only=True
+    )
+    supporter_last_name = serializers.CharField(
+        source='supporter.last_name',
+        read_only=True
+    )
     # This field is derived from the model and cannot be written to by users
     is_hidden_by_owner = serializers.BooleanField(read_only=True)
     
@@ -59,6 +71,18 @@ class PledgeDetailSerializer(serializers.ModelSerializer):
     amount=serializers.IntegerField(read_only=True)
     fundraiser = serializers.PrimaryKeyRelatedField(read_only=True)
     supporter = serializers.PrimaryKeyRelatedField(read_only=True)
+    supporter_username = serializers.CharField(
+        source='supporter.username',
+        read_only=True
+    )
+    supporter_first_name = serializers.CharField(
+        source='supporter.first_name',
+        read_only=True
+    )
+    supporter_last_name = serializers.CharField(
+        source='supporter.last_name',
+        read_only=True
+    )
     date_created = serializers.DateTimeField(read_only=True)
     is_hidden_by_owner = serializers.BooleanField(read_only=True)
 

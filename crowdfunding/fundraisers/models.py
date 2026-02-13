@@ -20,7 +20,8 @@ class Fundraiser(models.Model):
 class Pledge(models.Model):
     
     amount = models.IntegerField()
-    comment = models.CharField(max_length=200)
+    # Comment is optional; allow blank strings.
+    comment = models.CharField(max_length=200, blank=True)
     anonymous = models.BooleanField()
     
     fundraiser = models.ForeignKey(

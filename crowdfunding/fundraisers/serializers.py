@@ -25,6 +25,8 @@ class PledgeSerializer(serializers.ModelSerializer):
         source='supporter.last_name',
         read_only=True
     )
+    # Comment is optional; allow it to be omitted or empty.
+    comment = serializers.CharField(required=False, allow_blank=True)
     # This field is derived from the model and cannot be written to by users
     is_hidden_by_owner = serializers.BooleanField(read_only=True)
     
@@ -88,7 +90,8 @@ class PledgeDetailSerializer(serializers.ModelSerializer):
 
     # Editable fields
     anonymous = serializers.BooleanField()
-    comment = serializers.CharField()
+    # Comment is optional; allow it to be omitted or empty.
+    comment = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Pledge

@@ -6,7 +6,7 @@ from django.http import Http404
 from .models import Fundraiser, Pledge
 from .serializers import FundraiserSerializer, PledgeSerializer, FundraiserDetailSerializer, PledgeDetailSerializer
 from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly, IsSupporterOrFundraiserOwnerOrReadOnly
-
+from .serializers import CustomUserSerializer  
 
 class FundraiserList(APIView):
     """
@@ -253,4 +253,12 @@ class PledgeDetail(APIView):
             pledge,
             context={'request': request}
         )
+        return Response(serializer.data)
+
+
+class CurrentUser(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = CustomUserSerializer(request.user)
         return Response(serializer.data)

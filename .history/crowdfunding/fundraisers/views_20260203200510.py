@@ -254,3 +254,5 @@ class PledgeDetail(APIView):
             context={'request': request}
         )
         return Response(serializer.data)
+
+from .serializers import CustomUserSerializer  
